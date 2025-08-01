@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worksheet Kalkulator Gizi Keluarga (dengan Manajemen Bahan)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .table-cell { padding: 12px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; font-size: 0.875rem; }
+        .header-cell { background-color: #f9fafb; font-weight: 600; color: #374151; }
+        .input-field { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; transition: border-color 0.2s, box-shadow 0.2s; }
+        .input-field:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
+        .total-row .table-cell { font-weight: 700; background-color: #f3f4f6; }
+        .summary-card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; text-align: center; }
+        .warning-box { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; text-align: center; }
+        #food-modal { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Kalkulator Gizi & Rencana Belanja Keluarga</h1>
+            <p class="text-gray-600 mb-2">Hitung kebutuhan gizi keluarga, kelola pilihan bahan makanan, dan dapatkan rekomendasi rencana belanja secara otomatis.</p>
+            <p class="text-sm text-gray-500 mb-6">Kalkulator ini menggunakan acuan Angka Kecukupan Gizi (AKG) 2019 untuk kebutuhan gizi umum. Harap diingat, kebutuhan setiap individu bisa berbeda, bisa lebih tinggi atau lebih rendah, tergantung kondisi masing-masing. <br><strong class="font-semibold text-gray-600">Selamat menjadi ahli gizi di rumah sendiri!</strong></p>
+
+
+            <!-- Bagian 1: Input Data Anggota Keluarga -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">1. Data Anggota Keluarga</h2>
+                <div id="family-members-container" class="space-y-4"></div>
+                <button id="add-member-btn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    + Tambah Anggota
+                </button>
+            </div>
+
+            <!-- Bagian 2: Hasil Perhitungan Gizi -->
+            <div class="mb-12">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">2. Hasil Kebutuhan Gizi Harian</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th rowspan="2" class="table-cell header-cell sticky left-0 bg-gray-100 z-10">Nama</th>
+                                <th colspan="5" class="table-cell header-cell">Kebutuhan Gizi (100%)</th>
+                                <th colspan="4" class="table-cell header-cell border-l border-gray-200">Target Asupan (80%)</th>
+                            </tr>
+                            <tr>
+                                <th class="table-cell header-cell">Energi (kkal)</th><th class="table-cell header-cell">Protein (g)</th><th class="table-cell header-cell">Lemak (g)</th><th class="table-cell header-cell">Karbo (g)</th><th class="table-cell header-cell">Serat (g)</th>
+                                <th class="table-cell header-cell border-l border-gray-200">Energi (kkal)</th><th class="table-cell header-cell">Protein (g)</th><th class="table-cell header-cell">Lemak (g)</th><th class="table-cell header-cell">Karbo (g)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody"></tbody>
+                        <tfoot id="results-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Bagian 3: Perencana Belanja -->
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">3. Kelola & Rencanakan Belanja</h2>
+                
+                <!-- Manajemen Bahan Makanan -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-lg mb-3">Daftar Bahan Makanan</h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="table-cell header-cell w-16">Pilih</th>
+                                    <th class="table-cell header-cell text-left">Nama Bahan</th>
+                                    <th class="table-cell header-cell">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="food-management-tbody"></tbody>
+                        </table>
+                    </div>
+                    <button id="add-new-food-btn" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors">
+                        + Tambah Bahan Makanan Baru
+                    </button>
+                </div>
+                
+                <button id="generate-plan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors mb-6 text-lg">
+                    Buat Rencana Belanja dari Bahan Terpilih
+                </button>
+
+                <div id="shopping-warning" class="hidden"></div>
+                <h3 class="font-semibold text-lg mb-3 mt-4">Hasil Rencana Belanja</h3>
+                <div class="overflow-x-auto">
+                     <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="table-cell header-cell">Bahan Makanan</th><th class="table-cell header-cell">Jumlah</th><th class="table-cell header-cell">Satuan</th><th class="table-cell header-cell">Energi (kkal)</th><th class="table-cell header-cell">Protein (g)</th><th class="table-cell header-cell">Karbo (g)</th><th class="table-cell header-cell">Lemak (g)</th><th class="table-cell header-cell">Estimasi Harga (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopping-list-tbody"></tbody>
+                        <tfoot id="shopping-list-tfoot"></tfoot>
+                    </table>
+                     <p class="text-xs text-gray-500 mt-2 text-right">*) Harga merupakan estimasi berdasarkan harga umum di wilayah Jabodetabek.</p>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-semibold text-lg mb-3">Ringkasan Pemenuhan Gizi</h3>
+                    <div id="shopping-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Tambah/Edit Bahan Makanan -->
+    <div id="food-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Tambah Bahan Makanan</h3>
+            <form id="food-form">
+                <input type="hidden" id="food-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="food-name" class="block text-sm font-medium text-gray-700">Nama Bahan</label>
+                        <input type="text" id="food-name" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-price" class="block text-sm font-medium text-gray-700">Harga (per satuan)</label>
+                        <input type="number" id="food-price" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-unit" class="block text-sm font-medium text-gray-700">Satuan</label>
+                        <input type="text" id="food-unit" class="input-field mt-1" required>
+                    </div>
+                     <div>
+                        <label for="food-baseQty" class="block text-sm font-medium text-gray-700">Kuantitas Dasar</label>
+                        <input type="number" step="0.01" id="food-baseQty" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-energy" class="block text-sm font-medium text-gray-700">Energi (kkal)</label>
+                        <input type="number" id="food-energy" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-protein" class="block text-sm font-medium text-gray-700">Protein (g)</label>
+                        <input type="number" id="food-protein" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-carbs" class="block text-sm font-medium text-gray-700">Karbohidrat (g)</label>
+                        <input type="number" id="food-carbs" class="input-field mt-1" required>
+                    </div>
+                    <div>
+                        <label for="food-fat" class="block text-sm font-medium text-gray-700">Lemak (g)</label>
+                        <input type="number" id="food-fat" class="input-field mt-1" required>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-btn" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const akgData={'B0-5':{energi:550,protein:9,lemak:31,karbo:60,serat:0},'B6-11':{energi:800,protein:15,lemak:35,karbo:105,serat:11},'B1-3':{energi:1350,protein:20,lemak:45,karbo:215,serat:19},'L4-6':{energi:1400,protein:25,lemak:50,karbo:220,serat:20},'P4-6':{energi:1400,protein:25,lemak:50,karbo:220,serat:20},'L7-9':{energi:1650,protein:40,lemak:65,karbo:250,serat:23},'P7-9':{energi:1650,protein:40,lemak:65,karbo:250,serat:23},'L10-12':{energi:2000,protein:50,lemak:65,karbo:300,serat:28},'P10-12':{energi:1900,protein:55,lemak:65,karbo:280,serat:27},'L13-15':{energi:2400,protein:70,lemak:80,karbo:350,serat:34},'P13-15':{energi:2050,protein:65,lemak:70,karbo:290,serat:29},'L16-18':{energi:2650,protein:75,lemak:85,karbo:400,serat:37},'P16-18':{energi:2100,protein:60,lemak:70,karbo:300,serat:29},'L19-29':{energi:2650,protein:65,lemak:75,karbo:430,serat:37},'P19-29':{energi:2250,protein:60,lemak:65,karbo:360,serat:32},'L30-49':{energi:2550,protein:65,lemak:70,karbo:415,serat:36},'P30-49':{energi:2150,protein:60,lemak:60,karbo:340,serat:30},'L50-64':{energi:2150,protein:65,lemak:60,karbo:340,serat:30},'P50-64':{energi:1800,protein:60,lemak:50,karbo:280,serat:25},'L65-80':{energi:1800,protein:64,lemak:50,karbo:280,serat:25},'P65-80':{energi:1550,protein:58,lemak:45,karbo:230,serat:22},'L80+':{energi:1600,protein:64,lemak:45,karbo:250,serat:22},'P80+':{energi:1400,protein:58,lemak:40,karbo:210,serat:20},'HAMIL_TM1':{energi:180,protein:1,lemak:2.3,karbo:25,serat:3},'HAMIL_TM2':{energi:300,protein:10,lemak:2.3,karbo:40,serat:4},'HAMIL_TM3':{energi:300,protein:30,lemak:2.3,karbo:40,serat:4},'MENYUSUI_6B1':{energi:330,protein:20,lemak:2.2,karbo:45,serat:5},'MENYUSUI_6B2':{energi:400,protein:15,lemak:2.2,karbo:55,serat:6}};
+        let bahanPokok=[{id:1,nama:'Beras Premium',harga:16000,satuan:'kg',energi:3570,karbo:792,protein:68,lemak:3,baseQty:1.5,selected:true},{id:2,nama:'Minyak Goreng',harga:18000,satuan:'liter',energi:8840,karbo:0,protein:0,lemak:1000,baseQty:0.2,selected:true},{id:3,nama:'Daging Ayam Ras',harga:35000,satuan:'kg',energi:2950,karbo:0,protein:182,lemak:250,baseQty:0.5,selected:true},{id:4,nama:'Daging Sapi Murni',harga:135000,satuan:'kg',energi:2700,karbo:0,protein:188,lemak:200,baseQty:0.2,selected:true},{id:5,nama:'Telur Ayam Ras',harga:2000,satuan:'butir',energi:77,karbo:0.4,protein:6.4,lemak:5.4,baseQty:5,selected:true},{id:6,nama:'Bawang Merah',harga:30000,satuan:'kg',energi:390,karbo:92,protein:15,lemak:2,baseQty:0.1,selected:true},{id:7,nama:'Bawang Putih',harga:40000,satuan:'kg',energi:1490,karbo:331,protein:64,lemak:5,baseQty:0.05,selected:true},{id:8,nama:'Gula Pasir',harga:19000,satuan:'kg',energi:3870,karbo:999,protein:0,lemak:0,baseQty:0.1,selected:true},{id:9,nama:'Tepung Terigu',harga:13000,satuan:'kg',energi:3640,karbo:763,protein:103,lemak:10,baseQty:0.2,selected:true},{id:10,nama:'Tempe',harga:5000,satuan:'papan',energi:193,karbo:12.7,protein:20.8,lemak:8.8,baseQty:2,selected:true},{id:11,nama:'Tahu',harga:5000,satuan:'bungkus',energi:76,karbo:1.9,protein:8,lemak:4.8,baseQty:2,selected:true},{id:12,nama:'Ikan Tongkol',harga:30000,satuan:'kg',energi:1790,karbo:0,protein:202,lemak:105,baseQty:0.3,selected:true},{id:13,nama:'Kentang',harga:16000,satuan:'kg',energi:870,karbo:201,protein:20,lemak:1,baseQty:0.5,selected:true},{id:14,nama:'Wortel',harga:10000,satuan:'kg',energi:410,karbo:96,protein:9,lemak:2,baseQty:0.25,selected:true},{id:15,nama:'Kangkung',harga:5000,satuan:'ikat',energi:19,karbo:3.9,protein:1.9,lemak:0.2,baseQty:2,selected:true},{id:16,nama:'Bayam',harga:5000,satuan:'ikat',energi:23,karbo:3.6,protein:2.9,lemak:0.4,baseQty:2,selected:true}];
+
+        const familyContainer=document.getElementById('family-members-container');
+        const addMemberBtn=document.getElementById('add-member-btn');
+        const resultsTbody=document.getElementById('results-tbody');
+        const resultsTfoot=document.getElementById('results-tfoot');
+        const foodManagementTbody=document.getElementById('food-management-tbody');
+        const addNewFoodBtn=document.getElementById('add-new-food-btn');
+        const generatePlanBtn=document.getElementById('generate-plan-btn');
+        const shoppingListTbody=document.getElementById('shopping-list-tbody');
+        const shoppingListTfoot=document.getElementById('shopping-list-tfoot');
+        const shoppingWarning=document.getElementById('shopping-warning');
+        const shoppingSummaryDiv=document.getElementById('shopping-summary');
+        const foodModal=document.getElementById('food-modal');
+        const modalTitle=document.getElementById('modal-title');
+        const foodForm=document.getElementById('food-form');
+        const cancelBtn=document.getElementById('cancel-btn');
+        let memberCount=0;
+        let familyNeeds={};
+
+        function getBaseAkgKey(g,a){if(a<0.5)return'B0-5';if(a<1)return'B6-11';if(a<=3)return'B1-3';const p=g.toUpperCase();if(a<=6)return p+'4-6';if(a<=9)return p+'7-9';if(a<=12)return p+'10-12';if(a<=15)return p+'13-15';if(a<=18)return p+'16-18';if(a<=29)return p+'19-29';if(a<=49)return p+'30-49';if(a<=64)return p+'50-64';if(a<=80)return p+'65-80';return p+'80+'}
+        function calculateNeeds(){resultsTbody.innerHTML='';let tN={energi:0,protein:0,lemak:0,karbo:0,serat:0};let tT={energi:0,protein:0,lemak:0,karbo:0};document.querySelectorAll('.family-member').forEach(m=>{const n=m.querySelector('input[name="name"]').value||`Anggota ${m.dataset.id}`;const a=parseFloat(m.querySelector('input[name="age"]').value);const g=m.querySelector('select[name="gender"]').value;const c=m.querySelector('select[name="condition"]').value;let needs={energi:0,protein:0,lemak:0,karbo:0,serat:0};if(!isNaN(a)){needs={...akgData[getBaseAkgKey(g,a)]};if(c!=='none'&&g==='P'&&akgData[c]){Object.keys(akgData[c]).forEach(k=>needs[k]+=akgData[c][k])}}const target={energi:needs.energi*0.8,protein:needs.protein*0.8,lemak:needs.lemak*0.8,karbo:needs.karbo*0.8};Object.keys(tN).forEach(k=>tN[k]+=needs[k]);Object.keys(tT).forEach(k=>tT[k]+=target[k]);resultsTbody.innerHTML+=`<tr><td class="table-cell sticky left-0 bg-white font-medium">${n}</td><td class="table-cell">${needs.energi.toFixed(0)}</td><td class="table-cell">${needs.protein.toFixed(1)}</td><td class="table-cell">${needs.lemak.toFixed(1)}</td><td class="table-cell">${needs.karbo.toFixed(1)}</td><td class="table-cell">${needs.serat.toFixed(1)}</td><td class="table-cell border-l border-gray-200 text-blue-600 font-semibold">${target.energi.toFixed(0)}</td><td class="table-cell text-blue-600 font-semibold">${target.protein.toFixed(1)}</td><td class="table-cell text-blue-600 font-semibold">${target.lemak.toFixed(1)}</td><td class="table-cell text-blue-600 font-semibold">${target.karbo.toFixed(1)}</td></tr>`});resultsTfoot.innerHTML=`<tr class="total-row"><td class="table-cell sticky left-0 bg-gray-200 z-10">TOTAL KELUARGA</td><td class="table-cell">${tN.energi.toFixed(0)}</td><td class="table-cell">${tN.protein.toFixed(1)}</td><td class="table-cell">${tN.lemak.toFixed(1)}</td><td class="table-cell">${tN.karbo.toFixed(1)}</td><td class="table-cell">${tN.serat.toFixed(1)}</td><td class="table-cell border-l border-gray-200 text-blue-700">${tT.energi.toFixed(0)}</td><td class="table-cell text-blue-700">${tT.protein.toFixed(1)}</td><td class="table-cell text-blue-700">${tT.lemak.toFixed(1)}</td><td class="table-cell text-blue-700">${tT.karbo.toFixed(1)}</td></tr>`;familyNeeds=tT}
+        function generateShoppingPlan(){if(!familyNeeds.energi||familyNeeds.energi<=0){shoppingWarning.textContent='Harap isi data anggota keluarga terlebih dahulu.';shoppingWarning.className='warning-box bg-red-100 text-red-700';shoppingWarning.classList.remove('hidden');return}const selectedFoods=bahanPokok.filter(item=>item.selected);if(selectedFoods.length===0){shoppingListTbody.innerHTML=`<tr><td colspan="8" class="table-cell text-gray-500">Tidak ada bahan makanan yang dipilih.</td></tr>`;shoppingListTfoot.innerHTML='';shoppingSummaryDiv.innerHTML='';shoppingWarning.textContent='Peringatan: Tidak ada bahan makanan yang dipilih. Harap pilih minimal satu.';shoppingWarning.className='warning-box bg-yellow-100 text-yellow-700';shoppingWarning.classList.remove('hidden');return}let baseBasketEnergy=0;selectedFoods.forEach(item=>{baseBasketEnergy+=item.energi*item.baseQty});const scalingFactor=baseBasketEnergy>0?familyNeeds.energi/baseBasketEnergy:0;let planTotal={energi:0,protein:0,karbo:0,lemak:0,harga:0};shoppingListTbody.innerHTML='';selectedFoods.forEach(item=>{const neededQty=item.baseQty*scalingFactor;const itemEnergi=item.energi*neededQty;const itemProtein=item.protein*neededQty;const itemKarbo=item.karbo*neededQty;const itemLemak=item.lemak*neededQty;const itemHarga=item.harga*neededQty;planTotal.energi+=itemEnergi;planTotal.protein+=itemProtein;planTotal.karbo+=itemKarbo;planTotal.lemak+=itemLemak;planTotal.harga+=itemHarga;shoppingListTbody.innerHTML+=`<tr><td class="table-cell text-left">${item.nama}</td><td class="table-cell font-medium">${neededQty.toFixed(2)}</td><td class="table-cell">${item.satuan}</td><td class="table-cell">${itemEnergi.toFixed(0)}</td><td class="table-cell">${itemProtein.toFixed(1)}</td><td class="table-cell">${itemKarbo.toFixed(1)}</td><td class="table-cell">${itemLemak.toFixed(1)}</td><td class="table-cell font-semibold">Rp ${itemHarga.toLocaleString('id-ID',{maximumFractionDigits:0})}</td></tr>`});shoppingListTfoot.innerHTML=`<tr class="total-row"><td colspan="7" class="table-cell text-right font-bold">Total Estimasi Harga</td><td class="table-cell font-bold">Rp ${planTotal.harga.toLocaleString('id-ID',{maximumFractionDigits:0})}</td></tr>`;updateShoppingSummary(planTotal);updateWarning(planTotal.energi,familyNeeds.energi)}
+        function updateShoppingSummary(pT){const cSC=(n,pV,tV)=>{const pct=tV>0?(pV/tV*100):100;let bg='bg-green-100';if(pct<80||pct>120)bg='bg-yellow-100';if(pct<50||pct>150)bg='bg-red-100';return`<div class="summary-card ${bg}"><h4 class="font-semibold text-gray-700">${n}</h4><p class="text-xl font-bold text-gray-900">${pV.toFixed(0)} / ${tV.toFixed(0)}</p><p class="text-sm text-gray-600">Tercapai ${pct.toFixed(1)}%</p></div>`};shoppingSummaryDiv.innerHTML=`${cSC('Energi (kkal)',pT.energi,familyNeeds.energi)}${cSC('Protein (g)',pT.protein,familyNeeds.protein)}${cSC('Karbohidrat (g)',pT.karbo,familyNeeds.karbo)}${cSC('Lemak (g)',pT.lemak,familyNeeds.lemak)}`}
+        function updateWarning(planEnergy,targetEnergy){const percentage=targetEnergy>0?(planEnergy/targetEnergy*100):100;let msg='';let className='warning-box';if(percentage>=90&&percentage<=110){msg=`Bagus! Pemenuhan energi (${percentage.toFixed(0)}%) berada dalam rentang target (90-110%).`;className+=' bg-green-100 text-green-700'}else if(percentage>=80&&percentage<90){msg=`Peringatan: Pemenuhan energi (${percentage.toFixed(0)}%) sedikit di bawah target.`;className+=' bg-yellow-100 text-yellow-700'}else if(percentage>110&&percentage<=120){msg=`Peringatan: Pemenuhan energi (${percentage.toFixed(0)}%) sedikit di atas target.`;className+=' bg-yellow-100 text-yellow-700'}else if(percentage<80){msg=`Bahaya: Pemenuhan energi (${percentage.toFixed(0)}%) jauh di bawah target.`;className+=' bg-red-100 text-red-700'}else{msg=`Bahaya: Pemenuhan energi (${percentage.toFixed(0)}%) jauh di atas target.`;className+=' bg-red-100 text-red-700'}shoppingWarning.textContent=msg;shoppingWarning.className=className;shoppingWarning.classList.remove('hidden')}
+        function addMember(){memberCount++;const mD=document.createElement('div');mD.className='family-member grid grid-cols-1 sm:grid-cols-5 gap-4 items-center p-4 border border-gray-200 rounded-lg';mD.dataset.id=memberCount;mD.innerHTML=`<div class="sm:col-span-2"><label class="block text-sm font-medium text-gray-700 mb-1">Nama</label><input type="text" name="name" class="input-field" placeholder="Contoh: Ayah"></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Usia (Tahun)</label><input type="number" name="age" step="0.1" class="input-field" placeholder="Contoh: 35"></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin</label><select name="gender" class="input-field"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div><div class="flex items-end h-full"><div class="w-full"><label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Khusus</label><select name="condition" class="input-field"><option value="none">Tidak Ada</option><option value="HAMIL_TM1">Hamil TM 1</option><option value="HAMIL_TM2">Hamil TM 2</option><option value="HAMIL_TM3">Hamil TM 3</option><option value="MENYUSUI_6B1">Menyusui 6 Bulan Pertama</option><option value="MENYUSUI_6B2">Menyusui 6 Bulan Kedua</option></select></div><button class="remove-member-btn ml-2 text-gray-400 hover:text-red-500 transition-colors p-2 h-10 w-10 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>`;familyContainer.appendChild(mD);mD.querySelectorAll('input, select').forEach(i=>i.addEventListener('input',calculateNeeds));mD.querySelector('.remove-member-btn').addEventListener('click',()=>{mD.remove();calculateNeeds()});calculateNeeds()}
+        
+        function renderFoodManagementTable(){foodManagementTbody.innerHTML='';bahanPokok.forEach(item=>{const row=document.createElement('tr');row.className='hover:bg-gray-50';row.innerHTML=`<td class="table-cell"><input type="checkbox" data-id="${item.id}" class="food-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.selected?'checked':''}></td><td class="table-cell text-left font-medium text-gray-800">${item.nama}</td><td class="table-cell"><button data-id="${item.id}" class="edit-btn text-blue-600 hover:text-blue-800 font-semibold px-2 py-1">Edit</button><button data-id="${item.id}" class="delete-btn text-red-600 hover:text-red-800 font-semibold px-2 py-1">Hapus</button></td>`;foodManagementTbody.appendChild(row)})}
+        
+        function openModal(mode,foodId=null){foodForm.reset();document.getElementById('food-id').value='';if(mode==='edit'){const food=bahanPokok.find(f=>f.id===foodId);if(food){modalTitle.textContent='Edit Bahan Makanan';document.getElementById('food-id').value=food.id;document.getElementById('food-name').value=food.nama;document.getElementById('food-price').value=food.harga;document.getElementById('food-unit').value=food.satuan;document.getElementById('food-baseQty').value=food.baseQty;document.getElementById('food-energy').value=food.energi;document.getElementById('food-protein').value=food.protein;document.getElementById('food-carbs').value=food.karbo;document.getElementById('food-fat').value=food.lemak}}else{modalTitle.textContent='Tambah Bahan Makanan'}foodModal.classList.remove('hidden');foodModal.classList.add('flex')}
+        function closeModal(){foodModal.classList.add('hidden');foodModal.classList.remove('flex')}
+        
+        foodManagementTbody.addEventListener('click',e=>{const id=parseInt(e.target.dataset.id);if(e.target.matches('.edit-btn')){openModal('edit',id)}else if(e.target.matches('.delete-btn')){if(confirm('Apakah Anda yakin ingin menghapus bahan makanan ini?')){const index=bahanPokok.findIndex(f=>f.id===id);if(index>-1){bahanPokok.splice(index,1);renderFoodManagementTable()}}}else if(e.target.matches('.food-checkbox')){const food=bahanPokok.find(f=>f.id===id);if(food)food.selected=e.target.checked}});
+        
+        foodForm.addEventListener('submit',e=>{e.preventDefault();const id=parseInt(document.getElementById('food-id').value);const foodData={nama:document.getElementById('food-name').value,harga:parseFloat(document.getElementById('food-price').value),satuan:document.getElementById('food-unit').value,baseQty:parseFloat(document.getElementById('food-baseQty').value),energi:parseFloat(document.getElementById('food-energy').value),protein:parseFloat(document.getElementById('food-protein').value),karbo:parseFloat(document.getElementById('food-carbs').value),lemak:parseFloat(document.getElementById('food-fat').value),selected:true};if(id){const index=bahanPokok.findIndex(f=>f.id===id);if(index>-1){bahanPokok[index]={...bahanPokok[index],...foodData}}}else{const newId=bahanPokok.length>0?Math.max(...bahanPokok.map(f=>f.id))+1:1;bahanPokok.push({id:newId,...foodData})}closeModal();renderFoodManagementTable()});
+        
+        addNewFoodBtn.addEventListener('click',()=>openModal('add'));
+        cancelBtn.addEventListener('click',closeModal);
+        
+        document.addEventListener('DOMContentLoaded',()=>{addMemberBtn.addEventListener('click',addMember);generatePlanBtn.addEventListener('click',generateShoppingPlan);addMember();renderFoodManagementTable()});
+    </script>
+</body>
+</html>
